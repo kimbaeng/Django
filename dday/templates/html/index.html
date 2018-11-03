@@ -1,0 +1,260 @@
+{% load staticfiles %}
+
+<head>
+    <!--Set metaData-->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <!--CSS-->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/flipclock.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.min.css' %}" />
+
+    <!--JS,JQ-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="{% static 'js/flipclock.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap-datepicker.kr.js' %}" charset="utf-8"></script>
+    <script type="text/javascript">
+        function NewPost() {
+            $('#postmodallabel').text('New Post')
+            $('#form').find('select, textarea').val('')
+            $("#form").find('input').not("input[name='csrfmiddlewaretoken']").attr("value", '')
+            $("#form").attr("action",  "post/new/")
+        };
+    </script>
+</head>
+
+<h1 style=" text-align: center;"><b>전역일 카운터</b></h1>
+<div class="arrow" data-toggle="modal" data-target="#postmodal" onclick="javascript:NewPost()">
+    NEW
+</div>
+<body>
+    <!--POST Start-->
+    
+    <div class="post" style="width: 90%; margin: auto;">
+        {% for post in posts %}
+    </div>
+
+    <div id="a" class="card text-black bg-light mb-3">
+
+        <!--header Start-->
+        <div class="card-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="badge badge-{{ post.status }}" style="font-size: 1rem;">
+                    {% if post.status == "success" %} 육군 {% elif post.status == "primary" %} 해군 {% elif post.status == "info" %} 공군 {% else %} 해병대 {% endif %}
+                </div>
+                <div style="float: right;">{{ post.finish|date:"Y년 m월 d일" }} 전역</div>
+            </div>
+        </div>
+
+        <!--body Start-->
+        <div class="card-body" style="margin: auto;">
+            <div class="d-flex">
+            <div class="name"> {{ post.name }}</div>
+            <div class="clock-{{ post.id}}"></div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="comment-btn{{ post.id }}" onclick="javascript:commentFold{{ post.id }}()">Open Comments <span class="badge badge-fill badge-info">{{ post.comment_set.all|length }}</span></button>
+                <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="post-edit" data-toggle="modal" data-target="#postmodal"onclick="javascript:load({{ post.id }})">Edit</button>
+                </div>
+            </div>
+
+            <!--Comments Start-->
+            <div class="comments{{ post.id }}" style="display:none;">
+                <div class="my-3 p-3 bg-white rounded shadow-sm">
+                    <h6 class="border-bottom border-gray pb-2 mb-0">Comments</h6>
+                    {% for comment in post.comment_set.all %}
+                    <div class="media text-muted pt-3">
+
+                        <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+                            <strong class="d-block text-gray-dark">{{ comment.author }}</strong>
+                            "{{ comment.msg }}"
+                        </p>
+                    </div>
+                    {% endfor %}
+
+                    <form action="{% url "comment_new" post.pk %}" method="POST">
+                        <div class="form-group">
+                            <label for="id_author" class="col-form-label">작성자:</label>
+                            <input type="text" class="form-control" name="author" required="" id="id_author" maxlength="10" style="max-width: 200px;">
+
+                            <label for="id_msg" class="form-contol">댓글:</label>
+                            <textarea name="msg" class="form-control" id="id_msg" required=""></textarea>
+                        </div>
+                        {% csrf_token %}
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-outline-secondary">작성</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!--Jscript Start-->
+        <script type="text/javascript">
+            var clock;
+            $(document).ready(function() {
+                // Set dates.
+                var futureDate = new Date("{{ post.finish }}");
+                var currentDate = new Date();
+                // Calculate the difference in seconds between the future and current date
+                var diff = futureDate.getTime() / 1000 - currentDate.getTime() / 1000;
+                // Calculate day difference and apply class to .clock for extra digit styling.
+                function dayDiff(first, second) {
+                    return (second - first) / (1000 * 60 * 60 * 24);
+                }
+                if (dayDiff(currentDate, futureDate) < 100) {
+                    $('.clock-{{ post.id}}').addClass('twoDayDigits');
+                } else {
+                    $('.clock-{{ post.id}}').addClass('threeDayDigits');
+                }
+                if (diff < 0) {
+                    diff = 0;
+                }
+                
+                clock = $('.clock-{{ post.id}}').FlipClock(diff, {
+                    clockFace: 'DailyCounter',
+                    countdown: true
+                });
+            });
+                    $(document).on(function() {
+            $("#post-edit").click(function() {
+                load();
+            });
+        });
+        function load(postid) {
+            id = postid;
+            $.ajax({
+                type: "GET",
+                url: "/" + postid + "/edit/",
+                dataType: "html",
+                
+                success: whenSuccess,
+                error: whenError
+            });
+        }
+        
+        function whenSuccess(data) {
+             html = data
+            var name = $(html).filter('#id_name').val();
+            var text = $(html).filter('#id_text').val();
+            var start = $(html).filter('#id_start').val();
+            var finish = $(html).filter('#id_finish').val();
+            var status = $(html).filter('#id_status').find('option:selected').val();
+            console.log(name)
+            console.log(text)
+            console.log(start)
+            console.log(finish)
+            console.log(status)
+            console.log(id)
+            $('#postmodallabel').replaceWith('<h5 class="modal-title" id="postmodallabel">Edit Post</h5>');
+            $("#id_name").attr("value", name);
+            $("#id_text").val(text);
+            $("#id_start").attr("value", start);
+            $("#id_finish").attr("value", finish);
+            $("#id_status").val(status);
+            $("#form").attr("action", id + "/edit/");
+        }
+        
+        function whenError() {
+            alert("error");
+        }
+            
+            function commentFold{{post.id}}() {
+                if ($('#comment-btn{{ post.id }}').html() == 'Open Comments <span class="badge badge-fill badge-info">{{ post.comment_set.all|length }}</span>') {
+                    $('#comment-btn{{ post.id }}').html('Close Comments <span class="badge badge-fill badge-info">{{ post.comment_set.all|length }}</span>');
+                    $('.comments{{ post.id }}').css({
+                        display: 'block',
+                    });
+                } else {
+                    $('#comment-btn{{ post.id }}').html('Open Comments <span class="badge badge-fill badge-info">{{ post.comment_set.all|length }}</span>');
+                    $('.comments{{ post.id }}').css({
+                        display: 'none',
+                    });
+                }
+            };
+            
+             $(function() {
+            $('.input-date.date').datepicker({
+                startView: 2,
+                calendarWeeks: false,
+                todayHighlight: true,
+                autoclose: true,
+                format: "yyyy-mm-dd",
+                language: "kr"
+            });
+        });
+        </script>
+
+    </div>
+    {% endfor %}
+    <!-----------------------------------------modal-start----------------->
+    </div>
+     <div class="modal fade" id="postmodal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="postmodallabel">Edit Post</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <form action="{% url "post_new" %}" method="POST" id="form">
+                        
+                       
+                            <div class="form-group">
+                            <div>
+                                <label for="id_name" class="col-form-label">name:</label>
+                                <input type="text" class="form-control" name="name"  id="id_name" maxlength="3" value="{{ post.name }}" required/>
+                            </div>
+
+                            <label for="id_text" class="col-form-label">메모:</label>
+                            <textarea class="form-control" name="text" id="id_text" value="" required></textarea>
+
+                            <div class="input-date date">
+                                <label for="id_start" class="col-form-label">입대일:</label>
+                                <input type="text" class="form-control" name="start"  id="id_start" value='{{ post.start|date:"Y-m-d" }}' required>
+                                <span class="input-group-addon">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+                            </div>
+                            <div class="input-date date">
+                                <label for="id_finish" class="col-form-label">전역일:</label>
+                                <input type="text" class="form-control" name="finish"  id="id_finish" value='{{ post.finish|date:"Y-m-d" }}' required>
+                                <span class="input-group-addon">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+
+                            </div>
+                            <label for="id_status" class="col-form-label">군 별:</label>
+                            <select name="status" id="id_status" class="custom-select">
+                                {% for value in status %}
+                                {% if value.0 == post.status %}
+                                <option value="{{ value.0 }}" selected>{{ value.1 }}</option>
+                                {% else %}
+                                <option value="{{ value.0 }}">{{ value.1 }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                           
+                            <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+                             {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-dark">Save Post</button>
+                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <!--------------------------------modal-finish----------------------------------------------------->
+</body>

@@ -1,0 +1,101 @@
+<!doctype HTML> {% load staticfiles %}
+<Title>NEW POST</Title>
+{% csrf_token %}
+<head>
+    <!--Set metaData-->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <!--CSS-->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/flipclock.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.min.css' %}" />
+
+    <!--JS,JQ-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="{% static 'js/flipclock.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/bootstrap-datepicker.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap-datepicker.kr.js' %}" charset="utf-8"></script>
+
+    <script type='text/javascript'>
+        $(function() {
+            $('.input-date.date').datepicker({
+                startView: 2,
+                calendarWeeks: false,
+                todayHighlight: true,
+                autoclose: true,
+                format: "yyyy-mm-dd",
+                language: "kr"
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>Bootstrap datepicker</h1>
+
+    </div>
+    <table>
+    </table>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#post-new">Open modal for @mdo</button>
+
+    <div class="modal fade" id="post-new" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">New Post</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_author" class="col-form-label">Author:</label>
+                            <select name="author" class="custom-select" required id="id_author">
+                                <option value="" selected>---------</option>
+                                <option value="1">kimbaeng</option>
+                            </select>
+
+                            <div>
+                                <label for="id_name" class="col-form-label">name:</label>
+                                <input type="text" class="form-control" name="name" required id="id_name" maxlength="3" />
+                            </div>
+
+                            <label for="id_text" class="col-form-label">text:</label>
+                            <textarea class="form-control" name="text" id="id_text" required></textarea>
+
+                            <div class="input-date date">
+                                <label for="id_start" class="col-form-label">입대일:</label>
+                                <input type="text" class="form-control" name="start" required id="id_start">
+                                <span class="input-group-addon">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+                            </div>
+                            <div class="input-date date">
+                                <label for="id_finish" class="col-form-label">전역일:</label>
+                                <input type="text" class="form-control" name="finish" required id="id_finish">
+                                <span class="input-group-addon">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+
+                            </div>
+                            <label for="id_status" class="col-form-label">군 별:</label>
+                            <select name="status" id="id_status" class="form-control">
+                                {% for value in status %}
+                                <option value="{{ value.0 }}">{{ value.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" d ata-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Send message</button>
+                    </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+</body>
